@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>韻律體操學院</title>
+  <!-- 引入 LINE LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
+  <style>
+    :root {
+      --primary: #8b7355;
+      --secondary: #c4a57b;
+      --bg: #faf8f5;
+      --white: #ffffff;
+      --border: #f5efe6;
+      --text: #6b5d4f;
+      --nav-height: 60px;
+    }
+
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: var(--nav-height); /* 預留底部導覽列空間 */
+    }
+
+    * { box-sizing: border-box; }
+
+    /* Header */
+    .app-header {
+      background: var(--white);
+      padding: 16px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .header-icon { font-size: 24px; }
+    .header-title { margin: 0; font-size: 18px; color: var(--primary); font-weight: bold; }
+
+    /* Main Content */
+    .main-content {
+      padding: 20px 16px;
+      max-width: 600px; /* 限制最大寬度，在平板/桌機也不會太寬 */
+      margin: 0 auto;
+    }
+
+    /* Pages Logic */
+    .page { display: none; animation: fadeIn 0.3s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Cards & UI Components */
+    .card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border: 1px solid var(--border);
+    }
+
+    h2 { color: var(--primary); font-size: 22px; margin-bottom: 16px; border-left: 4px solid var(--secondary); padding-left: 10px; }
+    h3 { color: var(--primary); font-size: 18px; margin-bottom: 12px; }
+    p { line-height: 1.6; margin-bottom: 12px; font-size: 15px; }
+
+    /* Feature Grid (Mobile Optimized) */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .feature-item {
+      background: var(--white);
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .feature-icon { font-size: 32px; margin-bottom: 8px; }
+    .feature-title { font-weight: bold; color: var(--primary); font-size: 14px; margin: 0; }
+
+    /* Course Cards */
+    .course-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border-left: 5px solid var(--secondary);
+    }
+    .course-title { font-size: 18px; font-weight: bold; color: var(--primary); margin: 0 0 8px 0; }
+    .tag {
+      display: inline-block;
+      background: #f5efe6;
+      color: var(--primary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+
+    /* Tables */
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; min-width: 300px; font-size: 14px; }
+    th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { background: #faf8f5; color: var(--primary); }
+
+    /* Forms */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; margin-bottom: 6px; color: var(--primary); font-weight: 500; font-size: 14px; }
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px; /* 防止 iOS 縮放 */
+      background: #fdfdfd;
+    }
+    .form-input:focus { outline: none; border-color: var(--secondary); }
+    
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--secondary), var(--primary));
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(139, 115, 85, 0.3);
+    }
+    .btn-submit:active { transform: scale(0.98); }
+
+    /* User Profile Section (LIFF) */
+    #user-info {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 10px;
+      background: #f0f9ff;
+      border-radius: 8px;
+      color: #005c99;
+      font-size: 14px;
+    }
+    #user-avatar { width: 30px; height: 30px; border-radius: 50%; }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      background: var(--white);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 1000;
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 10px;
+      height: 100%;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 20px; margin-bottom: 2px; }
+
+    /* Safe Area for iPhone X+ */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .bottom-nav { padding-bottom: env(safe-area-inset-bottom); height: calc(var(--nav-height) + env(safe-area-inset-bottom)); }
+      body { padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 20px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="app-header">
+    <div class="header-icon">🎀</div>
+    <h1 class="header-title">韻律體操學院</h1>
+  </header>
+
+  <main class="main-content">
+    
+    <!-- Page: Home/About -->
+    <div id="home" class="page active">
+      <div class="card" style="background: linear-gradient(135deg, #f5efe6 0%, #ffffff 100%); text-align: center;">
+        <h2 style="border:none; text-align:center; font-size: 24px;">優雅舞動 • 自信成長</h2>
+        <p>歡迎來到最專業的韻律體操教室。<br>讓我們一起在運動中發現更美的自己。</p>
+        <button class="btn-submit" onclick="switchTab('courses')" style="width: auto; padding: 10px 24px; font-size: 14px;">查看課程</button>
+      </div>
+
+      <h2>學院特色</h2>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-icon">✨</div>
+          <p class="feature-title">國手師資</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🩰</div>
+          <p class="feature-title">優雅儀態</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💪</div>
+          <p class="feature-title">核心體能</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🏆</div>
+          <p class="feature-title">定期檢定</p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3>為什麼選擇我們？</h3>
+        <p>我們致力於為 4 歲至成人的學員提供專業、安全的環境。透過球、環、棒、帶、繩的操作，訓練協調性與專注力。</p>
+      </div>
+    </div>
+
+    <!-- Page: Courses -->
+    <div id="courses" class="page">
+      <h2>熱門課程</h2>
+      
+      <div class="course-card">
+        <h3 class="course-title">幼兒律動啟蒙</h3>
+        <div><span class="tag">4-6 歲</span><span class="tag">60 分鐘</span></div>
+        <p style="margin-top: 8px; font-size: 14px;">透過遊戲與音樂引導，認識身體節奏，接觸基礎手具操作，快樂學習。</p>
+      </div>
+
+      <div class="course-card">
+        <h3 class="course-title">兒童基礎培訓</h3>
+        <div><span class="tag">7-10 歲</span><span class="tag">90 分鐘</span></div>
+        <p style="margin-top: 8px; font-size: 14px;">拉筋、芭蕾基本功訓練，繩、圈、球等手具初級技巧教學。</p>
+      </div>
+
+      <div class="course-card">
+        <h3 class="course-title">成人美體伸展</h3>
+        <div><span class="tag">18歲+</span><span class="tag">不限基礎</span></div>
+        <p style="margin-top: 8px; font-size: 14px;">結合體操伸展與皮拉提斯，放鬆緊繃肌肉，雕塑優美體態。</p>
+      </div>
+    </div>
+
+    <!-- Page: Schedule -->
+    <div id="schedule" class="page">
+      <h2>課表與費用</h2>
+      
+      <div class="card">
+        <h3>本週課表</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>時段</th>
+                <th>六</th>
+                <th>日</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>10:00</td>
+                <td>幼兒律動</td>
+                <td>幼兒律動</td>
+              </tr>
+              <tr>
+                <td>14:00</td>
+                <td>兒童基礎</td>
+                <td>兒童基礎</td>
+              </tr>
+              <tr>
+                <td>16:00</td>
+                <td>選手培訓</td>
+                <td>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: 12px; color: #999; margin-top: 10px;">* 平日晚間課程請洽詢教練</p>
+      </div>
+
+      <div class="card">
+        <h3>費用方案</h3>
+        <table style="width: 100%">
+          <tr>
+            <td>單堂體驗</td>
+            <td style="text-align: right; font-weight: bold; color: var(--secondary);">$350</td>
+          </tr>
+          <tr>
+            <td>一期 (8堂)</td>
+            <td style="text-align: right; font-weight: bold; color: var(--secondary);">$4,800</td>
+          </tr>
+          <tr>
+            <td>一期 (16堂)</td>
+            <td style="text-align: right; font-weight: bold; color: var(--secondary);">$8,800</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Page: Contact -->
+    <div id="contact" class="page">
+      <h2>預約體驗</h2>
+      
+      <!-- User Info (Hidden until LIFF loads) -->
+      <div id="user-info">
+        <img id="user-avatar" src="" alt="">
+        <span>Hi, <b id="user-name">訪客</b></span>
+      </div>
+
+      <div class="card">
+        <p>填寫下方表單，我們會將您的預約資訊直接傳送至聊天室，並盡快確認。</p>
+        
+        <form id="bookingForm">
+          <div class="form-group">
+            <label class="form-label">聯絡人姓名</label>
+            <input type="text" id="inputName" class="form-input" placeholder="請輸入姓名">
+          </div>
+          <div class="form-group">
+            <label class="form-label">聯絡電話</label>
+            <input type="tel" id="inputPhone" class="form-input" placeholder="0912-345-678">
+          </div>
+          <div class="form-group">
+            <label class="form-label">感興趣的課程</label>
+            <select id="inputCourse" class="form-input" style="background: white;">
+              <option value="幼兒律動啟蒙">幼兒律動啟蒙 (4-6歲)</option>
+              <option value="兒童基礎培訓">兒童基礎培訓 (7-10歲)</option>
+              <option value="成人美體伸展">成人美體伸展 (成人)</option>
+              <option value="其他諮詢">其他諮詢</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">備註留言</label>
+            <textarea id="inputMemo" class="form-textarea" rows="3" placeholder="例如：小朋友完全沒基礎..."></textarea>
+          </div>
+          
+          <button type="button" id="btnSend" class="btn-submit">傳送預約資訊</button>
+        </form>
+      </div>
+
+      <div class="card" style="text-align: center; background: transparent; box-shadow: none; border: none;">
+        <p style="font-size: 13px; color: #999;">📍 台北市體育路 123 號 2 樓<br>📞 (02) 2345-6789</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('home')">
+      <span class="nav-icon">🏠</span>
+      <span>首頁</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('courses')">
+      <span class="nav-icon">🤸‍♀️</span>
+      <span>課程</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('schedule')">
+      <span class="nav-icon">📅</span>
+      <span>課表</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('contact')">
+      <span class="nav-icon">📝</span>
+      <span>預約</span>
+    </button>
+  </nav>
+
+  <script>
+    // --- 1. 初始化設定 ---
+    // 請將您的 LIFF ID 填入下方 (格式如: 1234567890-AbcdEfgh)
+    // 如果尚未申請 LIFF，請先至 LINE Developers Console 建立 LIFF App
+    const MY_LIFF_ID = "YOUR_LIFF_ID_HERE"; 
+
+    // --- 2. 頁面切換邏輯 ---
+    function switchTab(tabId) {
+      // 隱藏所有頁面
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      // 顯示目標頁面
+      document.getElementById(tabId).classList.add('active');
+      
+      // 更新按鈕狀態
+      document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+      // 這裡簡單判定，實際專案可用 data-target 屬性
+      const indexMap = { 'home': 0, 'courses': 1, 'schedule': 2, 'contact': 3 };
+      document.querySelectorAll('.nav-item')[indexMap[tabId]].classList.add('active');
+
+      // 滾動到頂部
+      window.scrollTo(0, 0);
+    }
+
+    // --- 3. LIFF 整合邏輯 ---
+    async function initializeLiff() {
+      try {
+        await liff.init({ liffId: MY_LIFF_ID });
+        
+        if (liff.isLoggedIn()) {
+          // 取得使用者資料
+          const profile = await liff.getProfile();
+          document.getElementById('user-name').textContent = profile.displayName;
+          if(profile.pictureUrl) {
+            document.getElementById('user-avatar').src = profile.pictureUrl;
+          }
+          document.getElementById('user-info').style.display = 'flex';
+          
+          // 自動填入姓名 (選用)
+          // document.getElementById('inputName').value = profile.displayName;
+        } else {
+          // 如果是外部瀏覽器開啟，提示登入 (選用)
+          // liff.login(); 
+        }
+      } catch (err) {
+        console.log('LIFF Initialization failed', err);
+        // 如果沒有 LIFF ID 或在一般瀏覽器測試，頁面仍可運作，只是無法自動傳訊
+      }
+    }
+
+    // --- 4. 表單傳送邏輯 ---
+    document.getElementById('btnSend').addEventListener('click', async () => {
+      const name = document.getElementById('inputName').value;
+      const phone = document.getElementById('inputPhone').value;
+      const course = document.getElementById('inputCourse').value;
+      const memo = document.getElementById('inputMemo').value;
+
+      if (!name || !phone) {
+        alert('請填寫姓名與電話');
+        return;
+      }
+
+      // 組合訊息文字
+      const messageText = `【官網預約】\n姓名：${name}\n電話：${phone}\n課程：${course}\n備註：${memo}`;
+
+      if (liff.isInClient()) {
+        // 在 LINE App 內：直接傳送訊息給官方帳號
+        try {
+          await liff.sendMessages([{ type: 'text', text: messageText }]);
+          alert('預約訊息已送出！我們會盡快聯絡您。');
+          liff.closeWindow(); // 送出後關閉視窗
+        } catch (error) {
+          alert('傳送失敗，請稍後再試');
+        }
+      } else {
+        // 在一般瀏覽器 (Chrome/Safari)：跳轉到 LINE URL Scheme
+        // 這會打開 LINE 並將文字帶入輸入框
+        const encodedText = encodeURIComponent(messageText);
+        window.location.href = `https://line.me/R/oaMessage/@YOUR_BASIC_ID/?${encodedText}`;
+        
+        // 備註：如果不使用 oaMessage，也可以單純顯示 Alert
+        alert('感謝您的填寫！(由於您不在 LINE 內開啟，請手動聯絡我們)');
+      }
+    });
+
+    // 啟動 LIFF
+    // 如果您還沒申請 LIFF ID，這行會報錯，但網頁 UI 仍會顯示
+    if (MY_LIFF_ID !== "YOUR_LIFF_ID_HERE") {
+        initializeLiff();
+    }
+  </script>
+</body>
+</html>
